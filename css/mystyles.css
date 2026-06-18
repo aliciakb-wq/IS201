@@ -1,0 +1,58 @@
+body{
+    background-color: rgb(175, 251, 175);
+    font-family: 'Times New Roman', Times, serif;
+}
+
+a{
+    color: rgb(255, 119, 23);
+}
+
+a:visited{
+    color:rgb(116, 0, 145);
+}
+
+.orderedlist{
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.common{
+    border: 2px solid rgb(7, 102, 7);
+    position: absolute;
+}
+
+.header{
+    top: 5px;
+    height: 80px;
+    left: 5px;
+    right: 5px;
+}
+
+.menu{
+    top: 94px;
+    left: 5px;
+    height: 800px;
+    width: 100px;
+}
+
+.middle{
+    top: 94px;
+    left: 114px;
+    height: 800px;
+    width: 375px;
+}
+
+.edge{
+    top: 94px;
+    right: 5px;
+    height: 800px;
+    width: 750px
+}
+
+.foot{
+    top: 900px;
+}
+
+.bot{
+    top: 1750px;
+}

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Survivor Tribal Council</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(to bottom, #1b3d2f, #0e1f17);
+        color: white;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+    }
+
+    h1 {
+        margin-top: 20px;
+        color: #ffd166;
+    }
+
+    #setup {
+        margin-top: 30px;
+    }
+
+    input {
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: none;
+        width: 200px;
+    }
+
+    button {
+        padding: 10px 20px;
+        margin-top: 10px;
+        border: none;
+        background: #ffd166;
+        color: black;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+    button:hover {
+        background: #ffb703;
+    }
+
+    #game {
+        width: 80%;
+        margin: auto;
+        margin-top: 20px;
+        padding: 20px;
+        border: 2px solid #ffd166;
+        border-radius: 10px;
+        background: rgba(0,0,0,0.4);
+        display: none;
+    }
+
+    .player {
+        display: inline-block;
+        padding: 10px;
+        margin: 5px;
+        border: 1px solid white;
+        border-radius: 8px;
+        cursor: pointer;
+        min-width: 120px;
+    }
+
+    .player:hover {
+        background: rgba(255,255,255,0.2);
+    }
+
+    .you {
+        border: 2px solid #00e5ff;
+        color: #00e5ff;
+        font-weight: bold;
+    }
+
+    .selected {
+        background: rgba(255, 209, 102, 0.4);
+    }
+
+    #log {
+        margin-top: 20px;
+        height: 220px;
+        overflow-y: auto;
+        border-top: 1px solid #555;
+        padding-top: 10px;
+        text-align: left;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>🏝️ Survivor Tribal Council Simulator</h1>
+
+<div id="setup">
+    <p>Enter your name to join the game:</p>
+    <input id="nameInput" placeholder="Your name">
+    <br>
+    <button onclick="startGame()">Start Game</button>
+</div>
+
+<div id="game">
+    <h2>Vote someone out</h2>
+    <div id="players"></div>
+
+    <button onclick="runTribalCouncil()">Run Tribal Council</button>
+
+    <div id="log"></div>
+</div>
+
+<script>
+let basePlayers = ["Ava", "Noah", "Mia", "Liam", "Sophia", "Ethan"];
+
+let activePlayers = [];
+let selectedVote = null;
+let userName = "";
+
+// idol system
+let userHasIdol = false;
+let idolFound = false;
+let idolUsed = false;
+
+const playersDiv = document.getElementById("players");
+const logDiv = document.getElementById("log");
+
+function startGame() {
+    userName = document.getElementById("nameInput").value.trim();
+
+    if (!userName) {
+        alert("Please enter your name!");
+        return;
+    }
+
+    activePlayers = [...basePlayers, userName];
+
+    document.getElementById("setup").style.display = "none";
+    document.getElementById("game").style.display = "block";
+
+    log(`🔥 Welcome to Survivor, ${userName}!`);
+    renderPlayers();
+}
+
+function log(msg) {
+    logDiv.innerHTML += msg + "<br>";
+    logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function maybeIdol() {
+    if (!idolFound && Math.random() < 0.35) {
+        userHasIdol = true;
+        idolFound = true;
+        log("🗿 YOU FOUND THE HIDDEN IMMUNITY IDOL!");
+        log("🛡️ You can now play it at any Tribal Council.");
+    }
+}
+
+function renderPlayers() {
+    playersDiv.innerHTML = "";
+
+    activePlayers.forEach(name => {
+        const div = document.createElement("div");
+        div.className = "player";
+
+        if (name === userName) {
+            div.classList.add("you");
+            div.innerText = userName + " (YOU)" + (userHasIdol ? " 🗿" : "");
+        } else {
+            div.innerText = name;
+        }
+
+        div.onclick = () => {
+            selectedVote = name;
+            log(`🗳️ You vote for ${name}`);
+        };
+
+        playersDiv.appendChild(div);
+    });
+}
+
+function askPlayIdol() {
+    if (!userHasIdol || idolUsed) return false;
+    return confirm("🗿 Do you want to play your Hidden Immunity Idol?");
+}
+
+function runTribalCouncil() {
+    if (!selectedVote) {
+        log("⚠️ Select someone to vote!");
+        return;
+    }
+
+    maybeIdol();
+
+    let votes = {};
+    activePlayers.forEach(p => votes[p] = 0);
+
+    // your vote
+    votes[selectedVote]++;
+
+    // AI votes
+    activePlayers.forEach(p => {
+        if (p !== userName) {
+            let choice = activePlayers[Math.floor(Math.random() * activePlayers.length)];
+            votes[choice]++;
+        }
+    });
+
+    log("🗳️ Votes being counted...");
+
+    setTimeout(() => {
+        let sorted = Object.entries(votes).sort((a,b) => b[1] - a[1]);
+        let eliminated = sorted[0][0];
+
+        log("📊 Results:");
+        sorted.forEach(v => log(`${v[0]}: ${v[1]} votes`));
+
+        // 🗿 IDOL DECISION POINT
+        if (eliminated === userName && userHasIdol && !idolUsed) {
+
+            let play = askPlayIdol();
+
+            if (play) {
+                idolUsed = true;
+                userHasIdol = false;
+
+                log("🗿 YOU PLAYED YOUR HIDDEN IMMUNITY IDOL!");
+                log("🛡️ All votes against you are negated!");
+                log("🔥 You are SAFE this round!");
+
+                selectedVote = null;
+                renderPlayers();
+                return;
+            }
+        }
+
+        // elimination happens
+        log(`💀 ${eliminated} has been voted out!`);
+
+        activePlayers = activePlayers.filter(p => p !== eliminated);
+        selectedVote = null;
+
+        // YOU GOT VOTED OUT WITHOUT IDOL
+        if (eliminated === userName) {
+            log("💀 You have been voted out of Survivor!");
+
+            log("🔥 You pulled an Ozzy! Going home with an idol in your pocket!");
+
+            playersDiv.innerHTML = "";
+            return;
+        }
+
+        if (activePlayers.length === 1) {
+            log(`🏆 ${activePlayers[0]} wins Survivor!`);
+            playersDiv.innerHTML = "";
+        } else {
+            renderPlayers();
+        }
+
+    }, 1200);
+}
+</script>
+
+</body>
+</html>
